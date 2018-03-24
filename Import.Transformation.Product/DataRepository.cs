@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using Ecommerce.Data.RepositoryStore;
 using Microsoft.Extensions.Logging;
+using MongoDB.Bson;
+using MongoDB.Bson.Serialization.IdGenerators;
 
 namespace Import.Mapping.Product
 {
@@ -32,29 +34,36 @@ namespace Import.Mapping.Product
 
             var countProducts = 0;
             var countModels = 0;
-            var id = 0;
+            var productId = 0;
+            var modelId = 0;
+            var lineIndex = 0;
 
             foreach (var item in data)
             {
-                id++;
-                item.Id = id;
+                lineIndex++;
 
                 try
                 {
+                    item._id = ObjectId.GenerateNewId();
+
                     if (item.RecordType.Equals("PRODUCT", StringComparison.OrdinalIgnoreCase))
                     {
+                        productId++;
+                        item.Id = productId;
                         ProductRepository.AddAsync(item).Wait();
                         countProducts++;
                     }
                     else
                     {
+                        modelId++;
+                        item.Id = modelId;
                         ModelRepository.AddAsync(item).Wait();
                         countModels++;
                     }
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, $"impossible d'importer la ligne {id}");
+                    _logger.LogError(ex, $"impossible d'importer la ligne {lineIndex}");
                 }
             }
 

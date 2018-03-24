@@ -1,5 +1,7 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 using Ecommerce.Data.RepositoryStore;
 using Import.Abstractions;
@@ -24,12 +26,10 @@ namespace Import.Transformation
 
         private static DataMapper _dataMapper;
         private static DataRepository _dataRepo;
-        private static AzureStorageAccess _azureStorageAccess;
-        private static string _productRepositoryFile;
-        private static string _modelRepositoryFile;
 
         static void Main(string[] args)
         {
+            PreloadAllAssemblies();
             Init();
 
             Console.WriteLine("Attente d'un message dans la file d'attente");
@@ -47,19 +47,8 @@ namespace Import.Transformation
                 //3°) Import dans le repository
                 _dataRepo.ImportData(data);
 
-                //4°) Partage des fichiers
-                var productFileName = Path.GetFileName(_productRepositoryFile);
-                var modelFileName = Path.GetFileName(_modelRepositoryFile);
-
-                _azureStorageAccess.UploadAsync(_productRepositoryFile, "traitement", productFileName).Wait();
-                _azureStorageAccess.UploadAsync(_modelRepositoryFile, "traitement", modelFileName).Wait();
-
                 //5°) Mettre en file d'attente le message
-                _outputQueueService.Enqueue(JsonConvert.SerializeObject(new
-                {
-                    ProductFileName = productFileName,
-                    ModelFileName = modelFileName
-                })).Wait();
+                _outputQueueService.Enqueue(json).Wait();
 
                 return MessageProcessResponse.Complete;
             }, (ex) =>
@@ -69,6 +58,20 @@ namespace Import.Transformation
 
             Console.WriteLine("press key to exit");
             Console.ReadKey();
+        }
+
+        private static void PreloadAllAssemblies()
+        {
+            var binDirectory = new DirectoryInfo("bin").FullName;
+
+            var files = Directory.Exists(binDirectory) ? new DirectoryInfo(binDirectory).GetFiles("*.dll") :
+                new DirectoryInfo(Directory.GetCurrentDirectory()).GetFiles("*.dll");
+
+            foreach (var file in files)
+            {
+                if (!AppDomain.CurrentDomain.GetAssemblies().Any(x => !x.IsDynamic && x.Location == file.FullName))
+                    Assembly.Load(Path.GetFileNameWithoutExtension(file.FullName));
+            }
         }
 
         private static void Init()
@@ -96,24 +99,25 @@ namespace Import.Transformation
 
             //initialisation du repository
             _dataMapper = new DataMapper();
-            var repositorySettings = new RepositorySettings();
-            configuration.GetSection("Repository").Bind(repositorySettings);
+
+            var productRepositorySettings = new RepositorySettings();
+            configuration.GetSection("Repositories:Product").Bind(productRepositorySettings);
+
+            var modelRepositorySettings = new RepositorySettings();
+            configuration.GetSection("Repositories:Model").Bind(modelRepositorySettings);
 
             var diagnosticSource = new MyDiagnosticSource();
 
-            _productRepositoryFile = repositorySettings.ConnectionString + "\\Products.json";
-            _modelRepositoryFile = repositorySettings.ConnectionString + "\\models.json";
-
-            var productRepository = new RepositoryStoreFactory<ProductModel>(repositorySettings.Provider, new ConnectionOptions
+            var productRepository = new RepositoryStoreFactory<ProductModel>(productRepositorySettings.Provider, new ConnectionOptions
             {
-                Provider = repositorySettings.ProviderType,
-                ConnectionString = _productRepositoryFile
+                Provider = productRepositorySettings.ProviderType,
+                ConnectionString = JsonConvert.SerializeObject(productRepositorySettings.ConnectionString)
             }, loggerFactory, diagnosticSource);
 
-            var modelRepository = new RepositoryStoreFactory<ProductModel>(repositorySettings.Provider, new ConnectionOptions
+            var modelRepository = new RepositoryStoreFactory<ProductModel>(modelRepositorySettings.Provider, new ConnectionOptions
             {
-                Provider = repositorySettings.ProviderType,
-                ConnectionString = _modelRepositoryFile
+                Provider = productRepositorySettings.ProviderType,
+                ConnectionString = JsonConvert.SerializeObject(modelRepositorySettings.ConnectionString)
             }, loggerFactory, diagnosticSource);
 
             _dataRepo = new DataRepository(productRepository, modelRepository, diagnosticSource, loggerFactory.CreateLogger<DataRepository>());
@@ -123,7 +127,7 @@ namespace Import.Transformation
             var azureBlobSettings = new AzureBlobSettings();
             configuration.Bind(azureBlobSettings);
 
-            _azureStorageAccess = new AzureStorageAccess(azureBlobSettings);
+            new AzureStorageAccess(azureBlobSettings);
         }
     }
 }

@@ -12,6 +12,9 @@
     <Reference Include="Ecommerce.Data.RepositoryStore">
       <HintPath>..\..\..\..\Users\mbt\.nuget\packages\ecommerce.data.repositorystore\1.0.3\lib\netcoreapp2.0\Ecommerce.Data.RepositoryStore.dll</HintPath>
     </Reference>
+    <Reference Include="MongoDB.Bson">
+      <HintPath>..\..\..\..\Users\mbt\.nuget\packages\mongodb.bson\2.5.0\lib\netstandard1.5\MongoDB.Bson.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
 </Project>

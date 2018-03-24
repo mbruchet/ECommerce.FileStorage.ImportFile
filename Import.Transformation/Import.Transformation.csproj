@@ -25,8 +25,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="ECommerce.Core" Version="1.0.4" />
+    <PackageReference Include="ECommerce.Core" Version="1.0.5" />
     <PackageReference Include="ECommerce.Data.FileStore" Version="1.0.3" />
+    <PackageReference Include="ECommerce.Data.MongoDbProvider" Version="1.0.1" />
   </ItemGroup>
 
   <ItemGroup>

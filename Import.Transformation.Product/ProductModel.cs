@@ -1,10 +1,15 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Runtime.Serialization;
+using MongoDB.Bson;
+using MongoDB.Bson.Serialization.Attributes;
 using Newtonsoft.Json;
 
 namespace Import.Mapping.Product
 {
     public class ProductModel
     {
+        [BsonId, IgnoreDataMember]
+        public ObjectId _id { get; set; }
         [Key]
         public long Id { get; set; }
         [JsonProperty("record_type")]
