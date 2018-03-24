@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Import.Abstractions\Import.Abstractions.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Ecommerce.Data.RepositoryStore">
+      <HintPath>..\..\..\..\Users\mbt\.nuget\packages\ecommerce.data.repositorystore\1.0.3\lib\netcoreapp2.0\Ecommerce.Data.RepositoryStore.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>

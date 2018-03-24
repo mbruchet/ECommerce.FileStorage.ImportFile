@@ -1,4 +1,6 @@
-﻿using System.IO;
+﻿using System;
+using System.Data;
+using System.IO;
 using System.Threading.Tasks;
 using Import.Abstractions;
 using Import.Abstractions.Interfaces;
@@ -16,6 +18,11 @@ namespace Import.Azure
         public AzureStorageAccess(IOptions<AzureBlobSettings> settings)
         {
             _settings = settings.Value;
+        }
+
+        public AzureStorageAccess(AzureBlobSettings settings)
+        {
+            _settings = settings;
         }
 
         private async Task<CloudFileShare> GetFileShareAsync()
@@ -80,5 +87,53 @@ namespace Import.Azure
             if(await cloudFile.ExistsAsync())
                 await cloudFile.DeleteAsync();
         }
+
+        public async Task UploadAsync(string filePath, string folder, string fileName)
+        {
+            var fileShare = await GetFileShareAsync();
+            var rootFolder = fileShare.GetRootDirectoryReference();
+
+            var targetDirectory =  rootFolder.GetDirectoryReference(folder);
+
+            if (!await targetDirectory.ExistsAsync() && !await targetDirectory.CreateIfNotExistsAsync())
+                    throw new InvalidOperationException($"can not create folder target {folder}");
+
+            var targetFile = targetDirectory.GetFileReference(fileName);
+
+            if (!await targetFile.ExistsAsync() || await targetFile.DeleteIfExistsAsync())
+                await targetFile.UploadFromFileAsync(filePath);
+        }
+        public async Task UploadAsync(Stream fileStream, string folder, string fileName)
+        {
+            var fileShare = await GetFileShareAsync();
+            var rootFolder = fileShare.GetRootDirectoryReference();
+
+            var targetDirectory = rootFolder.GetDirectoryReference(folder);
+
+            if (!await targetDirectory.CreateIfNotExistsAsync())
+                return;
+
+            var targetFile = targetDirectory.GetFileReference(fileName);
+
+            if (await targetFile.DeleteIfExistsAsync())
+                await targetFile.UploadFromStreamAsync(fileStream);
+        }
+
+        public async Task UploadAsync(byte[] fileContent, int index, int count, string folder, string fileName)
+        {
+            var fileShare = await GetFileShareAsync();
+            var rootFolder = fileShare.GetRootDirectoryReference();
+
+            var targetDirectory = rootFolder.GetDirectoryReference(folder);
+
+            if (!await targetDirectory.CreateIfNotExistsAsync())
+                return;
+
+            var targetFile = targetDirectory.GetFileReference(fileName);
+
+            if (await targetFile.DeleteIfExistsAsync())
+                await targetFile.UploadFromByteArrayAsync(fileContent, index, count);
+        }
+
     }
 }

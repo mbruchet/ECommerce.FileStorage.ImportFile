@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Azure.ServiceBus;
@@ -23,8 +24,18 @@ namespace Import.Azure.Services
 
         public async Task SendAsync(T item, Dictionary<string, object> properties)
         {
-            var json = JsonConvert.SerializeObject(item);
-            var message = new Message(Encoding.UTF8.GetBytes(json));
+            Message message = null;
+
+            if (typeof(T).Name.Equals("string", StringComparison.OrdinalIgnoreCase))
+            {
+                message = new Message(Encoding.UTF8.GetBytes(item.ToString()));
+            }
+            else
+            {
+                var json = JsonConvert.SerializeObject(item);
+                message = new Message(Encoding.UTF8.GetBytes(json));
+            }
+
 
             if (properties != null)
             {
