@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Azure\**" />
+    <Content Remove="Azure\**" />
+    <EmbeddedResource Remove="Azure\**" />
+    <None Remove="Azure\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="wwwroot\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.All" Version="2.0.6" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <DotNetCliToolReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Tools" Version="2.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Import.Abstractions\Import.Abstractions.csproj" />
+    <ProjectReference Include="..\Import.Azure\Import.Azure.csproj" />
+    <ProjectReference Include="..\Import.Service\Import.Service.csproj" />
+    <ProjectReference Include="..\Import.Transformation.Xml\Import.Transformation.Xml.csproj" />
+  </ItemGroup>
+
+</Project>
